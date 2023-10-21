@@ -2,9 +2,9 @@ const gameWidth = 270;
 const gameHeigt = 180;
 const worldWidth = 270;
 const worldHeigt = 180;
+var Cooldown = 0;
 
-class PlayScene extends Phaser.Scene
-{
+class PlayScene extends Phaser.Scene {
     constructor(){
         super();
     }
@@ -12,12 +12,15 @@ class PlayScene extends Phaser.Scene
     preload() { //Charge les fichiers
         this.load.image("Background", "assets/ciel.png");
         this.load.image("Stars", "assets/etoile.png");
+        this.load.image("Dash", "assets/DashEffect.png");
         this.load.spritesheet("IceBlock", "assets/iceblock.png",
             {frameHeight: 48, frameWidth: 48
         });
         this.load.spritesheet("Character", "assets/mage.png",
             {frameHeight: 40, frameWidth: 32
         });
+        // Charge les fichiers audios
+        this.load.audio("Music", "assets/Game.mp3");
         
 
 
@@ -89,17 +92,33 @@ class PlayScene extends Phaser.Scene
         this.player.setCollideWorldBounds(true);
         this.player.anims.play("idle");
 
+        // Score
+        this.score = 0;
+        this.scoreText = this.add.text(16,10, "Score: 0", {
+            fontSize: "12px", fill: "#1c5d60"
+        });
 
-        // Physique
+        // Physique et Collisions
         this.physics.add.collider(this.player, this.ground);
         this.physics.add.collider(this.stars, this.ground);
         this.physics.world.setBoundsCollision(true, true, false, true);
+        this.physics.add.overlap(this.player, this.stars, this.collectStar, null, this);
 
         // Controles
         this.cursors = this.input.keyboard.createCursorKeys();
+        this.special = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        
+
+
+        // Audio
+        this.MusiqueBack = this.sound.add("Music");
+        this.backgroundMusic();
+        
     }
 
     update() { //Utilisée à chaque image
+
+
         // Controles
         let dir = 0;
         if (this.cursors.left.isDown) {
@@ -121,14 +140,52 @@ class PlayScene extends Phaser.Scene
             }
     
         } else {
-            if (this.player.body.setVelocityY < 0) {
-                this.player.anims.play("airUp", true);
-            } else {
-                this.player.anims.play("airDown", true)
+                if (this.player.body.velocity.y < 0) {
+                    this.player.anims.play("airUp", true);
+                } else {
+                    this.player.anims.play("airDown", true);
+                }
             }
+        if (this.player.body.onFloor != true) {
+                if (this.cursors.down.isDown){
+                    this.player.setVelocityY(400);
+                }
+                
+            } 
+
+        this.player.setVelocityX(200 * dir);
+
+        /*if (Cooldown == 60*10){
+            if (this.special.isDown){
+                Cooldown = 0;
+            }
+        }else {
+            Cooldown += 1;
         }
-         this.player.setVelocityX(200 * dir);
+        console.log(Cooldown)*/
+
+
+        }
+        
+
+    collectStar(player, star){    
+        star.disableBody(true, true)
+        this.score += 100;
+        this.scoreText.setText("Score: " + this.score);
+
+        if (this.stars.countActive() === 0){
+            this.stars.children.iterate(function(star) {
+                star.enableBody(true, star.x, -30, true, true);
+            })
+        }
     }
+
+    backgroundMusic() {
+        this.MusiqueBack.play({
+            loop: true
+        });
+    }
+
 }
 
 const config = {
