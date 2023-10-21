@@ -41,7 +41,19 @@ class PlayScene extends Phaser.Scene
             ),
             frameRate: 10,
             repeat:-1
-        })
+        });
+
+        this.anims.create({
+            key: "airUp",
+            frames: [ { key: "Character", frame :6}],
+            frameRate: 20
+        });
+
+        this.anims.create({
+            key: "airDown",
+            frames: [ { key: "Character", frame :7}],
+            frameRate: 20
+        });
 
         // Ciel
         this.add.image(gameWidth/2 + 50,gameHeigt/2 - 50, "Background");
@@ -59,29 +71,29 @@ class PlayScene extends Phaser.Scene
         const step = worldWidth/(numStars+1);
         this.stars = this.physics.add.group({
             key: "Stars",
-            repeat: numStars-1,
+            repeat: (numStars-1),
             gravityY: 300,
             setXY: {x: step, y: -30, stepX: step}
         });
     
         this.stars.children.iterate(function (child){
             child.setBounceY(Phaser.Math.FloatBetween(0.1,0.9),)
-        })
+        });
         
         // Joueur
         this.player = this.physics.add.sprite(
             100, 20, "Character"
         );
         
-        this.player.setGravityY(200);
-
+        this.player.setGravityY(420);
+        this.player.setCollideWorldBounds(true);
         this.player.anims.play("idle");
 
 
         // Physique
         this.physics.add.collider(this.player, this.ground);
-
         this.physics.add.collider(this.stars, this.ground);
+        this.physics.world.setBoundsCollision(true, true, false, true);
 
         // Controles
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -98,13 +110,24 @@ class PlayScene extends Phaser.Scene
             this.player.flipX = false;
         }
 
-        if (dir === 0){
-            this.player.anims.play("idle", true)
-        }   else {
-            this.player.anims.play("run", true)
+        if (this.player.body.onFloor()){
+            if (this.cursors.up.isDown){
+                this.player.setVelocityY(-300);
+            }
+            if (dir === 0){
+                this.player.anims.play("idle", true)
+            }   else {
+                this.player.anims.play("run", true)
+            }
+    
+        } else {
+            if (this.player.body.setVelocityY < 0) {
+                this.player.anims.play("airUp", true);
+            } else {
+                this.player.anims.play("airDown", true)
+            }
         }
-
-        this.player.setVelocityX(160 * dir);
+         this.player.setVelocityX(200 * dir);
     }
 }
 
@@ -112,7 +135,7 @@ const config = {
     type: Phaser.AUTO,
     scale: {
         autoCenter: Phaser.Scale.CENTER_BOTH,
-        zoom: 2.5,
+        zoom: 4,
         width: gameWidth,
         height: gameHeigt
     },
