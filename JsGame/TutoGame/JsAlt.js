@@ -1,4 +1,3 @@
-
 const gameWidth = 270;
 const gameHeigt = 180;
 const worldWidth = 270;
@@ -21,6 +20,10 @@ class PlayScene extends Phaser.Scene {
         this.load.spritesheet("Character", "assets/mage.png",
             {frameHeight: 40, frameWidth: 32
         });
+        this.load.spritesheet("Monster", "assets/monstre.png",
+        {frameHeight: 48, frameWidth: 48
+        });
+        
         // Charge les fichiers audios
         this.load.audio("Music", "assets/Game.mp3");
         
@@ -44,7 +47,7 @@ class PlayScene extends Phaser.Scene {
             frames:this.anims.generateFrameNumbers(
                 "Character", {frames:[5,6,7,4]}
             ),
-            frameRate: 10,
+            frameRate: 15,
             repeat:-1
         });
 
@@ -58,6 +61,14 @@ class PlayScene extends Phaser.Scene {
             key: "airDown",
             frames: [ { key: "Character", frame :7}],
             frameRate: 20
+        });
+        this.anims.create({
+            key: "MonsterFlight",
+            frames: this.anims.generateFrameNumbers(
+                "Monster", {start:0, end:3}
+            ),
+            frameRate: 25,
+            repeat: -1
         });
 
         // Ciel
@@ -84,6 +95,9 @@ class PlayScene extends Phaser.Scene {
         this.stars.children.iterate(function (child){
             child.setBounceY(Phaser.Math.FloatBetween(0.1,0.9),)
         });
+
+        // Monstre
+        this.monsters = this.physics.add.group()
         
         // Joueur
         this.player = this.physics.add.sprite(
@@ -103,8 +117,10 @@ class PlayScene extends Phaser.Scene {
         // Physique et Collisions
         this.physics.add.collider(this.player, this.ground);
         this.physics.add.collider(this.stars, this.ground);
+        this.physics.add.collider(this.monsters, this.ground);
         this.physics.world.setBoundsCollision(true, true, false, true);
         this.physics.add.overlap(this.player, this.stars, this.collectStar, null, this);
+        this.physics.add.overlap(this.player, this.monsters, this.hitMonster, null, this);
 
         // Controles
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -116,12 +132,12 @@ class PlayScene extends Phaser.Scene {
         this.MusiqueBack = this.sound.add("Music");
         this.backgroundMusic();
         
+        this.gameOver = false;
     }
 
     update() { //Utilisée à chaque image
-
-
-        // Controles
+        if (!this.gameOver){
+            // Controles
         let dir = 0;
         if (this.cursors.left.isDown) {
             dir = -1;
@@ -154,34 +170,37 @@ class PlayScene extends Phaser.Scene {
                 };
                 }
         
-         /*if (Cooldown == 60*1){
+         
             if (this.special.isDown){
-                  Cooldown = 0;
-                  BoostOn = true;
-                  BoostOnCooldown += 1;
-              }
-            }else { 
-                    Cooldown += 1; */
+                this.player.setVelocityX(400 * dir);
+                this.player.setVelocityY(25);
+                console.log("Space")
+            } else{
+                this.player.setVelocityX(200 * dir);
+            }
 
-        if (this.dashingFunction(Cooldown == 60, dashingOn < 300)){
+
+        /*if (this.dashingFunction(Cooldown == 60, dashingOn < 300)){
             this.dash;
             this.dashingFunction(dashingOn += 1);
+        }*/
+
         }
+
         
-        this.player.setVelocityX(200 * dir);
-
-
         }
     
-    dashingFunction(Cooldown, dashingOn){
+    /*dashingFunction(Cooldown, dashingOn){
         this.new.Cooldown = 0;
         this.new.dashingOn = 0;
         this.dash = this.player.setVelocityX(500 * dir)
         
+    }*/
+    playerMovement(){
+        this.BoostOn = false; 
     }
-        
 
-    collectStar(player, star){    
+    collectStar(player, star){
         star.disableBody(true, true)
         this.score += 100;
         this.scoreText.setText("Score: " + this.score);
@@ -189,8 +208,28 @@ class PlayScene extends Phaser.Scene {
         if (this.stars.countActive() === 0){
             this.stars.children.iterate(function(star) {
                 star.enableBody(true, star.x, -30, true, true);
-            })
+            });
+            let x;
+            if(this.player.x < worldWidth/2){
+                x = Phaser.Math.Between(worldWidth/2, worldWidth);
+            } else{
+                x = Phaser.Math.Between(0, worldWidth/2);
+            }
+            const monster = this.monsters.create(x, -30, "monster");
+            monster.anims.play("MonsterFlight");
+            monster.setBounce(1);
+            monster.setCollideWorldBounds(true);
+            monster.setGravityY(150);
+            monster.setVelocity(-100, 0);
+
         }
+    }
+
+    hitMonster(){
+        this.physics.pause();
+        this.player.setTint(0xff0000);
+        this.player.anims.play("idle");
+        this.gameOver = true;
     }
 
     backgroundMusic() {
