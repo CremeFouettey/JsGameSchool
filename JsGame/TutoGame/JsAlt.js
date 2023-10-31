@@ -97,7 +97,7 @@ class PlayScene extends Phaser.Scene {
         });
 
         // Monstre
-        this.monsters = this.physics.add.group()
+        this.monsters = this.physics.add.group();
         
         // Joueur
         this.player = this.physics.add.sprite(
@@ -107,6 +107,8 @@ class PlayScene extends Phaser.Scene {
         this.player.setGravityY(420);
         this.player.setCollideWorldBounds(true);
         this.player.anims.play("idle");
+        this.player.body.setSize(22, 30, true);
+        this.player.body.setOffset(this.player.body.offset.x, 10);
 
         // Score
         this.score = 0;
@@ -126,7 +128,17 @@ class PlayScene extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.special = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
         
+        // Tests Boost
+        class boost {
+            constructor(boostOffCooldown, boostOn, boostOnCooldown) {
 
+                this.boostOffCooldown = boostOffCooldown;
+                this.boostOn = boostOn;
+                this.boostOnCooldown = boostOnCooldown;
+            }
+        }
+        let boostTest = new boost(45, false, true);
+        console.log(boostTest)
 
         // Audio
         this.MusiqueBack = this.sound.add("Music");
@@ -146,6 +158,8 @@ class PlayScene extends Phaser.Scene {
             dir = 1;
             this.player.flipX = false;
         }
+  
+        // Saut mouvement
 
         if (this.player.body.onFloor()){
             if (this.cursors.up.isDown){
@@ -221,8 +235,12 @@ class PlayScene extends Phaser.Scene {
             monster.setCollideWorldBounds(true);
             monster.setGravityY(150);
             monster.setVelocity(-100, 0);
+            monster.body.setSize(38, 41, true);
+            monster.body.setOffset(monster.body.offset.x, );
 
         }
+
+        
     }
 
     hitMonster(){
@@ -230,6 +248,8 @@ class PlayScene extends Phaser.Scene {
         this.player.setTint(0xff0000);
         this.player.anims.play("idle");
         this.gameOver = true;
+
+        setTimeout(()=> this.scene.restart(), 2000)
     }
 
     backgroundMusic() {
@@ -237,6 +257,8 @@ class PlayScene extends Phaser.Scene {
             loop: true
         });
     }
+
+
 
 }
 
